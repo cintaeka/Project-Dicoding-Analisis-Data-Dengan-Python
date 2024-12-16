@@ -12,90 +12,74 @@ warnings.filterwarnings("ignore")
 st.title("Analisis Data Pelanggan dan Pertanyaan Bisnis")
 
 # Load datasets
-orders = pd.read_csv('https://raw.githubusercontent.com/cintaeka/Dicoding-BelajarAnalisisDataDenganPython/refs/heads/main/Data/orders_dataset.csv') 
-customers = pd.read_csv('https://raw.githubusercontent.com/cintaeka/Dicoding-BelajarAnalisisDataDenganPython/refs/heads/main/Data/customers_dataset.csv') 
-geolocation = pd.read_csv('https://raw.githubusercontent.com/cintaeka/Dicoding-BelajarAnalisisDataDenganPython/refs/heads/main/Data/geolocation_dataset.csv') 
-items = pd.read_csv('https://raw.githubusercontent.com/cintaeka/Dicoding-BelajarAnalisisDataDenganPython/refs/heads/main/Data/order_items_dataset.csv') 
-payments = pd.read_csv('https://raw.githubusercontent.com/cintaeka/Dicoding-BelajarAnalisisDataDenganPython/refs/heads/main/Data/order_payments_dataset.csv') 
-reviews = pd.read_csv('https://raw.githubusercontent.com/cintaeka/Dicoding-BelajarAnalisisDataDenganPython/refs/heads/main/Data/order_reviews_dataset.csv') 
-products = pd.read_csv('https://raw.githubusercontent.com/cintaeka/Dicoding-BelajarAnalisisDataDenganPython/refs/heads/main/Data/products_dataset.csv') 
-sellers = pd.read_csv('https://raw.githubusercontent.com/cintaeka/Dicoding-BelajarAnalisisDataDenganPython/refs/heads/main/Data/sellers_dataset.csv') 
-category = pd.read_csv('https://raw.githubusercontent.com/cintaeka/Dicoding-BelajarAnalisisDataDenganPython/refs/heads/main/Data/product_category_name_translation.csv') 
+orders = pd.read_csv('../data/orders_dataset.csv', sep=';') 
+customers = pd.read_csv('../data/customers_dataset.csv', sep=';') 
+geolocation = pd.read_csv('../data/geolocation_dataset.csv') 
+items = pd.read_csv('../data/order_items_dataset.csv', sep=';') 
+payments = pd.read_csv('../data/order_payments_dataset.csv', sep=';') 
+reviews = pd.read_csv('../data/order_reviews_dataset.csv') 
+products = pd.read_csv('../data/products_dataset.csv', sep=';') 
+sellers = pd.read_csv('../data/sellers_dataset.csv', sep=';') 
+category = pd.read_csv('../data/product_category_name_translation.csv', sep=';') 
 
-# Input dari pengguna menggunakan Streamlit
-st.sidebar.header("Filter Tanggal")
-start_date = st.sidebar.date_input("Tanggal Mulai", value=pd.to_datetime("2021-01-01").date())
-end_date = st.sidebar.date_input("Tanggal Akhir", value=pd.to_datetime("2021-12-31").date())
 
-# Pastikan konversi tanggal menggunakan pd.to_datetime()
-start_date = pd.to_datetime(start_date)
-end_date = pd.to_datetime(end_date)
+#filtering order_status
+state = orders['order_status'].unique().tolist()
+state = st.selectbox(
+    label=("status orderan berdasarkan berdasarkan order_status"),
+    options=state
+)
+filtered_data = orders[orders['order_status'] == state]
+st.dataframe(filtered_data)
 
-# Filter data berdasarkan rentang tanggal
-orders['order_purchase_timestamp'] = pd.to_datetime(orders['order_purchase_timestamp'])
-filtered_orders = orders[(orders['order_purchase_timestamp'] >= start_date) &
-                         (orders['order_purchase_timestamp'] <= end_date)]
+# Metode Pembayaran apa yang paling banyak digunakan?
+st.subheader("Pembayaran yang paling banyak digunakan")
+ 
+if 'payment_type' in payments.columns:
+    # Hitung jumlah transaksi berdasarkan kolom payment_type
+    payment_type_counts = payments['payment_type'].value_counts()
+    
+    # Streamlit UI
+    st.title("Analisis Metode Pembayaran")
+    st.subheader("Metode Pembayaran yang Paling Banyak Digunakan")
 
-# Tampilkan data yang difilter
-st.write(f"Menampilkan data dari {start_date.date()} hingga {end_date.date()}:")
-st.dataframe(filtered_orders)
+    # Buat grafik dengan Matplotlib
+    fig, ax = plt.subplots(figsize=(8, 6))
+    payment_type_counts.plot(kind='bar', color='skyblue', ax=ax)
 
-st.write("Start Date:", start_date, type(start_date))
-st.write("End Date:", end_date, type(end_date))
+    # Pengaturan grafik
+    ax.set_title('Metode Pembayaran Paling Banyak Digunakan', fontsize=16)
+    ax.set_xlabel('Jenis Pembayaran', fontsize=14)
+    ax.set_ylabel('Jumlah Transaksi', fontsize=14)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, fontsize=12)
 
-# Pertanyaan 1: Metode pembayaran yang paling banyak digunakan
-st.header("Pertanyaan 1: Metode Pembayaran yang Paling Banyak Digunakan")
-payment_count = payments['payment_type'].value_counts().reset_index()
-payment_count.columns = ['payment_type', 'count']
+    # Tampilkan grafik di Streamlit
+    st.pyplot(fig)
+else:
+    # Pesan error jika kolom payment_type tidak ditemukan
+    st.error("Kolom 'payment_type' tidak ditemukan di file data.")
 
-st.write("Jumlah penggunaan tiap metode pembayaran:")
-st.dataframe(payment_count)
+# di daerah mana yang paling banyak pelanggan?
+if 'customer_state' in customers.columns:
+    # Hitung jumlah pelanggan berdasarkan kolom customer_state
+    customer_state_counts = customers['customer_state'].value_counts()
+    
+    # Streamlit UI
+    st.title("Analisis Daerah Pelanggan")
+    st.subheader("Daerah dengan Jumlah Pelanggan Terbanyak")
 
-most_used_payment = payment_count.iloc[0]
-st.write(f"Metode pembayaran yang paling banyak digunakan adalah **{most_used_payment['payment_type']}** dengan jumlah **{most_used_payment['count']}** kali.")
+    # Buat grafik dengan Matplotlib
+    fig, ax = plt.subplots(figsize=(8, 6))
+    customer_state_counts.plot(kind='bar', color='skyblue', ax=ax)
 
-# Visualisasi Pertanyaan 1
-st.subheader("Visualisasi: Metode Pembayaran yang Paling Banyak Digunakan")
-fig_payment = px.bar(payment_count, x='payment_type', y='count', color='payment_type', 
-                     title="Metode Pembayaran yang Paling Banyak Digunakan")
-st.plotly_chart(fig_payment)
+    # Pengaturan grafik
+    ax.set_title('Daerah yang Paling Banyak Pelanggan', fontsize=16)
+    ax.set_xlabel('Daerah', fontsize=14)
+    ax.set_ylabel('Jumlah Pelanggan', fontsize=14)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, fontsize=12)
 
-# Pertanyaan 2: Daerah dengan jumlah pelanggan terbanyak
-st.header("Pertanyaan 2: Daerah dengan Jumlah Pelanggan Terbanyak")
-customer_city_count = customers['customer_city'].value_counts().reset_index()
-customer_city_count.columns = ['customer_city', 'count']
-
-st.write("Jumlah pelanggan per kota:")
-st.dataframe(customer_city_count)
-
-most_popular_city = customer_city_count.iloc[0]
-st.write(f"Kota dengan jumlah pelanggan terbanyak adalah **{most_popular_city['customer_city']}** dengan total pelanggan **{most_popular_city['count']}**.")
-
-# Visualisasi Pertanyaan 2
-st.subheader("Visualisasi: Kota dengan Jumlah Pelanggan Terbanyak")
-fig_city = px.bar(customer_city_count.head(10), x='customer_city', y='count', 
-                  color='customer_city', title="10 Kota dengan Jumlah Pelanggan Terbanyak")
-st.plotly_chart(fig_city)
-
-# Pertanyaan 3: Analisis tambahan - Total transaksi per bulan
-st.header("Pertanyaan 3: Total Transaksi Per Bulan")
-filtered_orders['order_month'] = filtered_orders['order_purchase_timestamp'].dt.to_period('M')
-monthly_sales = filtered_orders.groupby('order_month').size().reset_index(name='count')
-
-st.write("Total transaksi per bulan:")
-st.dataframe(monthly_sales)
-
-fig_monthly_sales = px.line(monthly_sales, x='order_month', y='count', title="Total Transaksi Per Bulan")
-st.plotly_chart(fig_monthly_sales)
-
-# (Opsional) RFM Analysis
-st.header("(Opsional) RFM Analysis")
-recent_date = filtered_orders['order_purchase_timestamp'].max()
-rfm_data = filtered_orders.groupby('customer_id').agg({
-    'order_purchase_timestamp': lambda x: (recent_date - x.max()).days,
-    'order_id': 'count',
-    'order_approved_at': 'sum'
-}).reset_index()
-rfm_data.columns = ['customer_id', 'Recency', 'Frequency', 'Monetary']
-st.write("Hasil RFM Analysis:")
-st.dataframe(rfm_data.head())
+    # Tampilkan grafik di Streamlit
+    st.pyplot(fig)
+else:
+    # Pesan error jika kolom customer_state tidak ditemukan
+    st.error("Kolom 'customer_state' tidak ditemukan di file data.")
